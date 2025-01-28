@@ -1,9 +1,7 @@
 use dotenv::from_path;
 use sqlx::Error;
-
-mod config;
+mod config { pub mod database; }
 use config::database::get_pool;
-
 
 fn main() {
     println!("dsds")

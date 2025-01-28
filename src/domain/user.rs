@@ -1,9 +1,9 @@
 
 pub struct User {
-    id: u64,
-    username: String,
-    password: String,
-    email: String,
-    created_at: i64,
-    updated_at: i64,
+    pub id: u64,
+    pub username: String,
+    pub password: String,
+    pub email: String,
+    pub created_at: i64,
+    pub updated_at: i64,
 }
