@@ -4,13 +4,10 @@ use thiserror::Error;
 use chrono::Utc;
 use argon2::{self, Config};
 
-mod domain {
-    pub mod user;
-}
-use domain::user::*;
+use crate::domain::user::User;
 
 #[derive(Debug,Error)]
-pub enum AuthErr {
+pub enum ErrCustom {
 
     #[error("Invalid credentials")]
     InvalidCredentials,
@@ -29,7 +26,7 @@ pub enum AuthErr {
 
 }
 
-struct AuthRepository {
+pub(crate) struct AuthRepository {
     db: MySqlPool,
 }
 
@@ -38,11 +35,11 @@ impl AuthRepository {
         Self { db }
     }
 
-    fn verify_password(&self, password: &str, hash: &str) -> Result<bool, Error> {
+    fn verify_password(&self, password: &str, hash: &str) -> Result<bool, ErrCustom> {
         argon2::verify_encoded(hash, password.as_bytes())
-            .map_err(|e| Error::HashError(e))
+            .map_err(|e| ErrCustom::HashError(e))
     }
-    fn hash_password(&self, password: &str) -> Result<String, Error> {
+    fn hash_password(&self, password: &str) -> Result<String, ErrCustom> {
         let salt = rand::random::<[u8; 32]>();
         let config = Config::default();
 
@@ -50,29 +47,27 @@ impl AuthRepository {
             password.as_bytes(),
             &salt,
             &config
-        ).map_err(|e| Error::HashError(e))
+        ).map_err(|e| ErrCustom::HashError(e))
     }
 
-    pub async fn login(&self, username: &str, password: &str) -> Result<bool, Error> {
-        let user = sqlx::query_as!(
-            User,
-            "SELECT * FROM users WHERE username = ?",
-            username
-        )
+    pub async fn login(&self, username: &str, password: &str) -> Result<bool, ErrCustom> {
+        let row = sqlx::query!(
+        "SELECT username, password FROM users WHERE username = ?",
+        username
+    )
             .fetch_optional(&self.db)
             .await?;
 
-        match user {
-            Some(user) => {
-                // Gunakan method verify_password
-                let valid = self.verify_password(password, &user.password)?;
+        match row {
+            Some(row) => {
+                let valid = self.verify_password(password, &row.password.unwrap_or_default())?;
                 Ok(valid)
             }
             None => Ok(false)
         }
     }
 
-    pub async fn register(&self, user: &User) -> Result<bool, Error> {
+    pub async fn register(&self, user: &User) -> Result<bool, ErrCustom> {
         // Gunakan method hash_password
         let hashed_password = self.hash_password(&user.password)?;
 

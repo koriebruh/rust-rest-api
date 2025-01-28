@@ -1,6 +1,8 @@
 ##
 cargo add serde serde_json --features derive
 
+cargo add validator --features derive
+
 #fo read configuration ENV (not only env)
 cargo add config
 

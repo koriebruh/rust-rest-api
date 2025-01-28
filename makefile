@@ -42,6 +42,11 @@ lint:
 	@echo "Running clippy for linting..."
 	$(CARGO) clippy -- -D warnings
 
+# Jalankan unit test
+test:
+	@echo "Running tests for $(PROJECT_NAME)..."
+	$(CARGO) test -- --nocapture
+
 # Help command untuk daftar semua target
 help:
 	@echo "Usage: make [target]"
@@ -54,4 +59,5 @@ help:
 	@echo "  clean        Clean build artifacts"
 	@echo "  format       Format the source code using rustfmt"
 	@echo "  lint         Run clippy to lint the source code"
+	@echo "  test         Run the unit tests"
 	@echo "  help         Show this help message"
