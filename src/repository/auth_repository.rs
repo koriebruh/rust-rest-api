@@ -26,6 +26,7 @@ pub enum ErrCustom {
 
 }
 
+#[derive(Clone)]
 pub(crate) struct AuthRepository {
     db: MySqlPool,
 }

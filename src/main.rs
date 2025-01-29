@@ -1,107 +1,34 @@
 mod domain;
-
-use dotenv::from_path;
-use sqlx::Error;
+mod service;
+mod controller;
+use crate::controller::auth_controller::register;
+use crate::controller::auth_controller::login;
+use actix_web::{App, HttpServer, web};
 mod config { pub mod database; }
 use config::database::get_pool;
-
 use validator::Validate;
 mod dto{ pub mod login_request;pub mod register_request; }
-use crate::dto::login_request::LoginRequest;
-use crate::dto::register_request::RegisterRequest;
 
 mod repository {pub mod auth_repository;}
 use repository::auth_repository::AuthRepository;
-
-use domain::user::User;
-use chrono::Utc;
-
-#[tokio::main(flavor = "current_thread")]
-async fn main()  {
-    println!("hey there")
-}
-
-#[test]
-fn test_dotenv_load() {
-    // Muat file .env secara eksplisit menggunakan from_path
-    from_path(".env").expect("Gagal memuat file .env");
-
-    // Ambil variabel dari lingkungan
-    let server_host = std::env::var("SERVER_HOST").expect("SERVER_HOST tidak ditemukan");
-    assert_eq!(server_host, "localhost");
-}
-#[tokio::test]
-async fn test_connection()-> Result<(),Error>{
-    let pool = get_pool().await?;
-
-    let result = sqlx::query!("SELECT * FROM users")
-        .fetch_all(&pool)
-        .await?;
+use crate::service::auth_service::AuthService;
 
 
-    assert!(!result.is_empty(), "Table users should not be empty");
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_register () -> Result<(), Box<dyn std::error::Error>> {
-    let pool = get_pool().await?;
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let pool = get_pool().await.expect("Failed to connect to database");
     let auth_repository = AuthRepository::new(pool);
-    let timestamp_millis = Utc::now().timestamp_millis();
+    let auth_service = AuthService::new(auth_repository);
 
-    let register = RegisterRequest{
-        username: "ehehehe".to_string(),
-        password: "muhewhewh".to_string(),
-        email: "nande@gmail.com".to_string(),
-    };
+    println!("Server running at http://localhost:3000");
 
-    // Validasi input dulu
-    match register.validate() {
-        Ok(_) => {
-            // mapping
-            let req_register = User{
-                id: 0,
-                username: register.username,
-                password: register.password,
-                email: register.email,
-                created_at: timestamp_millis,
-                updated_at: timestamp_millis,
-            };
-            // Jika validasi sukses, lakukan registrasi
-            match auth_repository.register(&req_register).await {
-                Ok(true) => println!("Registrasi berhasil!"),
-                Ok(false) => println!("Registrasi gagal: Username atau email mungkin sudah ada"),
-                Err(e) => println!("Error saat registrasi: {:?}", e)
-            }
-        },
-        Err(e) => println!("Validation error: {:?}", e),
-    }
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_login () -> Result<(), Box<dyn std::error::Error>> {
-    let pool = get_pool().await?;
-    let auth_repository = AuthRepository::new(pool);
-
-    let login = LoginRequest{
-        username: "ehehehe".to_string(),
-        password: "muhewhewh".to_string(),
-    };
-
-    // Validasi input dulu
-    match login.validate() {
-        Ok(_) => {
-            // Jika validasi sukses, lakukan login
-            match auth_repository.login(&login.username, &login.password).await {
-                Ok(true) => println!("Login berhasil!"),
-                Ok(false) => println!("Login gagal: Username atau email mungkin sudah ada"),
-                Err(e) => println!("Error saat registrasi: {:?}", e)
-            }
-        },
-        Err(e) => println!("Validation error: {:?}", e),
-    }
-
-    Ok(())
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(auth_service.clone()))
+            .service(login)
+            .service(register)
+    })
+        .bind("127.0.0.1:3000")?
+        .run()
+        .await
 }
