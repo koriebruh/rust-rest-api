@@ -1,17 +1,18 @@
 mod domain;
-mod service;
-mod controller;
+
 use actix_web::{App, HttpServer, web};
+use crate::config::database::get_pool;
 
 mod config { pub mod database; }
-use config::database::get_pool;
-use validator::Validate;
 mod dto {
     pub mod login_request;
     pub mod register_request;
 }
 
+
 mod repository { pub mod auth_repository; }
+mod service {pub mod auth_service;}
+mod controller {pub mod auth_controller;}
 
 
 #[actix_web::main]
@@ -28,6 +29,7 @@ async fn main() -> std::io::Result<()> {
     let auth_repository = repository::auth_repository::AuthRepository::new(pool.clone());
     let auth_service = service::auth_service::AuthService::new(auth_repository);
 
+    println!("server listen on :3000");
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))

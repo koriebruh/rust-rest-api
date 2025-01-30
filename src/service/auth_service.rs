@@ -41,7 +41,7 @@ impl IAuthService for AuthService {
         }
 
         let mapping = User {
-            id: 0,
+            id: None,
             username: request.username,
             password: request.password,
             email: request.email,

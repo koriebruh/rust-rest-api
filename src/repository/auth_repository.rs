@@ -1,7 +1,6 @@
 use sqlx::mysql::MySqlPool;
-use sqlx::Error;
+// use sqlx::Error;
 use thiserror::Error;
-use chrono::Utc;
 use argon2::{self, Config};
 
 use crate::domain::user::User;
