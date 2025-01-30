@@ -1,9 +1,15 @@
 use chrono::Utc;
-use crate::repository::auth_repository::{AuthRepository, ErrCustom};
+use crate::repository::auth_repository::{AuthRepository, ErrCustom, IAuthRepository};
 use crate::domain::user::User;
 use crate::dto::login_request::LoginRequest;
 use crate::dto::register_request::RegisterRequest;
 use validator::Validate;
+
+
+pub trait IAuthService {
+    async fn login(&self, request: LoginRequest) -> Result<String, ErrCustom>;
+    async fn register(&self, request: RegisterRequest) -> Result<String, ErrCustom>;
+}
 
 #[derive(Clone)]
 pub(crate) struct AuthService {
@@ -14,8 +20,10 @@ impl AuthService {
     pub fn new(repository: AuthRepository) -> Self {
         Self { repository }
     }
+}
 
-    pub async fn login(&self, request: LoginRequest) -> Result<String, ErrCustom> {
+impl IAuthService for AuthService {
+    async fn login(&self, request: LoginRequest) -> Result<String, ErrCustom> {
         if let Err(_validation_errors) = request.validate() {
             return Err(ErrCustom::InvalidCredentials);
         }
@@ -27,8 +35,7 @@ impl AuthService {
         }
     }
 
-    pub async fn register(&self, request: RegisterRequest) -> Result<String, ErrCustom> {
-
+    async fn register(&self, request: RegisterRequest) -> Result<String, ErrCustom> {
         if let Err(_validation_errors) = request.validate() {
             return Err(ErrCustom::InvalidCredentials);
         }
@@ -46,6 +53,5 @@ impl AuthService {
             Ok(_) => Ok("register user success ".to_string()),
             Err(e) => Err(e),
         }
-
     }
 }

@@ -1789,6 +1789,7 @@ dependencies = [
  "chrono",
  "config",
  "dotenv",
+ "http",
  "rand",
  "rust-argon2",
  "serde",
