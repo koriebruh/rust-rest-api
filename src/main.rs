@@ -1,9 +1,9 @@
 mod domain;
 
 use actix_web::{App, HttpServer, web};
-use crate::config::database::get_pool;
+use crate::conf::database::get_pool;
 
-mod config { pub mod database; }
+mod conf { pub mod database;  pub mod jwt;}
 mod dto {
     pub mod login_request;
     pub mod register_request;
